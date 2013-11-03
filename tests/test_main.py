@@ -36,12 +36,14 @@ class TestFormat(TestCase):
 	    src_location=os.path.join('this', 'is', 'a', 'bar').replace(os.sep, '.')
 	)
 	test_a.errors.append('this is an error')
+        test_a.failures.append('this is a failure')
 
 	xunit_reference="""<?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
-    <testsuite errors="1" failures="0" hostname="test-hostname" id="0" name="tests" package="tests" tests="2" time="5.000000" timestamp="1970-01-01T01:00:00">
+    <testsuite errors="1" failures="1" hostname="test-hostname" id="0" name="tests" package="tests" tests="2" time="5.000000" timestamp="1970-01-01T01:00:00">
 	<testcase classname="foo" name="a-test" time="1.000000">
 	    <error message="this is an error" type="exception" />
+	    <failure message="this is a failure" type="exception" />
 	</testcase>
 	<testcase classname="this.is.a.bar" name="b-test" time="2.000000" />
     </testsuite>

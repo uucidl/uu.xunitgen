@@ -87,7 +87,7 @@ def tostring(test_results, hostname=gethostname()):
     assert test_count > 0, 'expecting at least one test'
 
     error_count = len([r for r in test_results if r.errors])
-    failure_count = 0
+    failure_count = len([r for r in test_results if r.failures])
     ts_micros = test_results[0].start_ts
     start_timestamp = datetime.fromtimestamp(micros_to_s(ts_micros)).isoformat()
 
@@ -102,10 +102,12 @@ def tostring(test_results, hostname=gethostname()):
 	test_duration = micros_to_s(r.end_ts - r.start_ts)
 	class_name = r.src_location
 
-	if r.errors:
+	if r.errors or r.failures:
 	    output += '<testcase name="%(test_name)s" classname="%(class_name)s" time="%(test_duration)f">' % locals()
 	    for e in r.errors:
 		output += '<error message="%s" type="exception"/>' % e
+	    for e in r.failures:
+		output += '<failure message="%s" type="exception"/>' % e
 
 	    output += '</testcase>'
 	else:
