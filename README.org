@@ -6,6 +6,13 @@ xml files for use in continuous integration. Such as Jenkins.
 It converts a stream of timed (start/finish/error) events and convert
 them into a report.
 
+It brings / need no dependencies.
+
+Also look at nose's xunit (more mature at this time) plugin if you're
+interested in producing such xml files:
+
+  http://nose.readthedocs.org/en/latest/plugins/xunit.html
+
 * Example
 
 #+begin_src python
