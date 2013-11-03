@@ -104,10 +104,12 @@ def tostring(test_results, hostname=gethostname()):
 
 	if r.errors or r.failures:
 	    output += '<testcase name="%(test_name)s" classname="%(class_name)s" time="%(test_duration)f">' % locals()
-	    for e in r.errors:
-		output += '<error message="%s" type="exception"/>' % e
-	    for e in r.failures:
-		output += '<failure message="%s" type="exception"/>' % e
+
+	    if r.failures:
+		output += '<failure message="%s" type="exception"/>' % '\n'.join(['%s' % e for e in r.failures])
+
+	    else:
+		output += '<error message="%s" type="exception"/>' % '\n'.join(['%s' % e for e in r.errors])
 
 	    output += '</testcase>'
 	else:
