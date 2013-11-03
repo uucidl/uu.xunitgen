@@ -1,0 +1,46 @@
+* Abstract
+
+xunitgen is a python module for the simple production of xunit/junit
+xml files for use in continuous integration. Such as Jenkins.
+
+It converts a stream of timed (start/finish/error) events and convert
+them into a report.
+
+* Example
+
+#+begin_src python
+import xunitgen
+
+receiver = xunitgen.TestEventReceiver()
+receiver.begin_case('a-test', 0, 'foo')
+receiver.failure('because', 'ExceptionFoo')
+receiver.end_case('a-test', 9)
+
+print xunitgen.tostring(receiver.results())
+#+end_src
+
+See also the source code for the event_trace module, it can serve as
+an example for the API:
+
+file:xunitgen/event_trace.py
+
+* Developing
+
+Create a virtual environment and activate it
+
+#+begin_example
+$ virtualenv venv
+$ . venv/bin/activate
+#+end_example
+
+Install development dependencies
+
+#+begin_example
+$ pip install -r dev_requirements.txt
+#+end_example
+
+With the virtual environment active, test your changes before submitting:
+
+#+begin_example
+$ nosetests -s tests
+#+end_example
