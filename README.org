@@ -1,7 +1,7 @@
 * Abstract
 
-=xunitgen= is a python module for the simple production of =xunit=/=junit=
-xml files for use in continuous integration. Such as =Jenkins=.
+=xunitgen= is a python module for the simple production of =xunit= or =junit=
+XML files for use in continuous integration. Such as with =Jenkins=.
 
 It converts a stream of timed (start/finish/error) events and convert
 them into a report.
