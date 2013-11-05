@@ -1,19 +1,21 @@
 * Abstract
 
-xunitgen is a python module for the simple production of xunit/junit
-xml files for use in continuous integration. Such as Jenkins.
+=xunitgen= is a python module for the simple production of =xunit=/=junit=
+xml files for use in continuous integration. Such as =Jenkins=.
 
 It converts a stream of timed (start/finish/error) events and convert
 them into a report.
 
-It brings / need no dependencies.
+It brings / need no dependencies besides an installation of =Python 2=.
 
-Also look at nose's xunit (more mature at this time) plugin if you're
+Also look at =nose='s xunit (more mature at this time) plugin if you're
 interested in producing such xml files:
 
   http://nose.readthedocs.org/en/latest/plugins/xunit.html
 
-* Example
+* Using
+
+Simply add the directory surrounding =xunitgen= into your =PYTHONPATH=, then:
 
 #+begin_src python
 import xunitgen
@@ -31,7 +33,10 @@ an example for the API:
 
 file:xunitgen/event_trace.py
 
-* Developing
+* Contributing
+
+If you want to make code contributions to =xunitgen= here are 
+the steps to follow to get a working development environment:
 
 Create a virtual environment and activate it
 
