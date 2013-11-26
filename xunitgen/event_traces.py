@@ -15,44 +15,45 @@ from socket import gethostname
 
 from xunitgen import TestEventReceiver, tostring
 
+
 def parse_trace(line):
     main_re = r'^TT01 ([0-9]+) ([0-9]+) ([0-9]+) ("(?:[^\\"]|\\.)*") ("(?:[^\\"]|\\.)*") ("[A-Z]")(.*)$'
     match = re.match(main_re, line)
     if match:
-	def get(i):
-	    return match.group(i)
+        def get(i):
+            return match.group(i)
 
-	def unquote_str(string):
-	    return eval(string)
+        def unquote_str(string):
+            return eval(string)
 
-	trace=dict(
-	    ts=int(get(1)),
-	    pid=int(get(2)),
-	    tid=int(get(3)),
-	    cat=unquote_str(get(4)),
-	    name=unquote_str(get(5)),
-	    ph=unquote_str(get(6)),
-	    args={},
-	)
+        trace = dict(
+            ts=int(get(1)),
+            pid=int(get(2)),
+            tid=int(get(3)),
+            cat=unquote_str(get(4)),
+            name=unquote_str(get(5)),
+            ph=unquote_str(get(6)),
+            args={},
+        )
 
-	arg_str = get(7)
-	if arg_str:
-	    for match in re.finditer(r' ("(?:[^\\"]|\\.)*") ((?:"(?:[^\\"]|\\.)*")|(?:[0-9]+\.[0-9]*)|(?:[0-9]+))', arg_str):
-		name = unquote_str(get(1))
-		value_str=get(2)
-		if re.match(r'^"(?:[^\\"]|\\.)*"$', value_str):
-		    value=unquote_str(value_str)
-		elif re.match(r'^[0-9]+\.[0-9]*$', value_str):
-		    value=float(value_str)
-		elif re.match(r'^[0-9]+$', value_str):
-		    value=int(value_str)
+        arg_str = get(7)
+        if arg_str:
+            for match in re.finditer(r' ("(?:[^\\"]|\\.)*") ((?:"(?:[^\\"]|\\.)*")|(?:[0-9]+\.[0-9]*)|(?:[0-9]+))', arg_str):
+                name = unquote_str(get(1))
+                value_str = get(2)
+                if re.match(r'^"(?:[^\\"]|\\.)*"$', value_str):
+                    value = unquote_str(value_str)
+                elif re.match(r'^[0-9]+\.[0-9]*$', value_str):
+                    value = float(value_str)
+                elif re.match(r'^[0-9]+$', value_str):
+                    value = int(value_str)
 
-		trace['args'][name] = value
+                trace['args'][name] = value
 
-	    if not trace['args']:
-		raise Exception('Could not parse args %r' % arg_str)
+            if not trace['args']:
+                raise Exception('Could not parse args %r' % arg_str)
 
-	return trace
+        return trace
 
     raise Exception('Could not parse %r' % line)
 
@@ -61,15 +62,17 @@ def gather_test_results(traces):
     receiver = TestEventReceiver()
 
     for trace in traces:
-	if trace['cat'] == 'test':
-	    if trace['ph'] == 'E' and receiver.current_case.name == trace['name']:
-		receiver.end_case(trace['name'], trace['ts'])
-	    elif trace['ph'] == 'B' and receiver.current_case is None:
-		receiver.begin_case(
-		    trace['name'], trace['ts'], os.path.splitext(trace['args']['filename'])[0].replace(os.sep, '.')
-		)
-	    elif trace['ph'] == 'I' and trace['name'] == 'failure':
-		receiver.failure(trace['args']['reason'], trace['args']['lineno'])
+        if trace['cat'] == 'test':
+            if trace['ph'] == 'E' and receiver.current_case.name == trace['name']:
+                receiver.end_case(trace['name'], trace['ts'])
+            elif trace['ph'] == 'B' and receiver.current_case is None:
+                receiver.begin_case(
+                    trace['name'], trace['ts'], os.path.splitext(
+                        trace['args']['filename'])[0].replace(os.sep, '.')
+                )
+            elif trace['ph'] == 'I' and trace['name'] == 'failure':
+                receiver.failure(trace['args'][
+                                 'reason'], trace['args']['lineno'])
 
     return receiver.results()
 
@@ -82,18 +85,19 @@ def main():
     args = parser.parse_args()
 
     with open(args.src_trace_log) as file:
-	def parse_line(line_i, line):
-	    try:
-		return parse_trace(line)
-	    except Exception as e:
-		raise Exception('%s:%d: error: %r' % (args.src_trace_log, i, e))
+        def parse_line(line_i, line):
+            try:
+                return parse_trace(line)
+            except Exception as e:
+                raise Exception('%s:%d: error: %r' % (
+                    args.src_trace_log, i, e))
 
-	test_results = gather_test_results(
-	    [parse_line(i, line) for i, line in enumerate(file.readlines())]
-	)
+        test_results = gather_test_results(
+            [parse_line(i, line) for i, line in enumerate(file.readlines())]
+        )
 
     with open(args.dst_xunit_file, 'w') as file:
-	file.write(tostring(test_results, gethostname()))
+        file.write(tostring(test_results, gethostname()))
 
 if __name__ == "__main__":
     main()
