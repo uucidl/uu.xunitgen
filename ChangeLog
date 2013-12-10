@@ -1,0 +1,10 @@
+2013-12-10    <nicolas@uucidl.com>
+
+	* release: 0.1.0
+	* xunitgen:
+	- shorter, better names for entry points
+	- new class Recorder, recording the results of a series of steps
+	- all internal timestamps in seconds
+	- XunitDestination, a class marshalling the creation of xunit xml
+	filenames under a root
+

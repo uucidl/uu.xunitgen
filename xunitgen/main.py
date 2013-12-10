@@ -1,12 +1,113 @@
 """convert test events to a xunit XML file"""
 
 import os
+import sys
+import time
 
 from datetime import datetime
 from socket import gethostname
+from contextlib import contextmanager
 
 
-class TestReport(object):
+class XunitDestination(object):
+    def __init__(self, root_dir):
+        self.root_dir = root_dir
+        self.expected_xunit_files = []
+
+
+    def write_reports(self, relative_path, suite_name, reports):
+        dest_path = self.reserve_file(relative_path)
+        with open(dest_path, 'w') as outf:
+            outf.write(toxml(reports, suite_name))
+        return dest_path
+
+
+    def reserve_file(self, relative_path):
+        """reserve a XML file for the slice at <relative_path>.xml
+
+        - the relative path will be created for you
+        - not writing anything to that file is an error
+        """
+        if os.path.isabs(relative_path):
+            raise ValueError('%s must be a relative path' % relative_path)
+
+        dest_path = os.path.join(self.root_dir, '%s.xml' % relative_path)
+
+        if os.path.exists(dest_path):
+            raise ValueError('%r must not already exist' % dest_path)
+
+        if dest_path in self.expected_xunit_files:
+            raise ValueError('%r already reserved' % dest_path)
+
+        dest_dir = os.path.dirname(dest_path)
+        if not os.path.isdir(dest_dir):
+            os.makedirs(dest_dir)
+
+        self.expected_xunit_files.append(dest_path)
+
+        return dest_path
+
+
+    def check(self):
+        expected = self.expected_xunit_files
+        if not all(os.path.exists(path) for path in expected):
+            raise Exception(
+                'result files %r reserved by hook have not been produced' % (
+                    set(path for path in expected if not os.path.isfile(path))
+            ))
+
+
+class Recorder(object):
+    """Use this class to record the result of running python code as a xunit xml
+
+    It allows you to record a series of steps into a single xunit.xml file.
+    """
+
+    def __init__(self, destination, name):
+        self.name = name
+        self.destination = destination
+        self.event_receiver = None
+
+
+    def __enter__(self):
+        self.event_receiver = EventReceiver()
+        return self
+
+
+    def now_seconds(self):
+        return time.time()
+
+
+    def step(self, step_name):
+        @contextmanager
+        def step_context(step_name):
+            if self.event_receiver.current_case is not None:
+                raise Exception('cannot open a step within a step')
+
+            self.event_receiver.begin_case(step_name, self.now_seconds(), self.name)
+            try:
+                yield
+            except:
+                etype, evalue, tb = sys.exc_info()
+                self.event_receiver.error('%r' % [etype, evalue, tb])
+                raise
+            finally:
+                self.event_receiver.end_case(step_name, self.now_seconds())
+
+        return step_context(step_name)
+
+
+    def __exit__(self, *exc_info):
+        results = self.event_receiver.results()
+        if not results:
+            raise ValueError('your hook must at least perform one step!')
+
+        self.destination.write_reports(self.name, self.name, results)
+
+
+
+class Report(object):
+    """represents a test case report"""
     def __init__(self, name, start_ts=None, end_ts=None, src_location=None):
         self.name = name
         self.start_ts = start_ts
@@ -31,27 +132,32 @@ class TestReport(object):
         return repr(self) == repr(another)
 
 
-class TestEventReceiver(object):
+class EventReceiver(object):
+    """eventfull interface to collect results from test cases and produce test reports."""
+
     def __init__(self):
         self.cases = []
         self.current_case = None
 
-    def end_current_case(self, ts_microseconds):
-        self.current_case.end_ts = ts_microseconds
+    def end_current_case(self, ts):
+        self.current_case.end_ts = ts
         self.cases.append(self.current_case)
 
-    def begin_case(self, test_name, ts_microseconds, src_location):
+    def begin_case(self, test_name, ts, src_location):
         if self.current_case is not None:
-            self.error(ts_microseconds)
-            self.end_current_case(ts_microseconds)
+            self.error(ts)
+            self.end_current_case(ts)
 
-        self.current_case = TestReport(test_name)
-        self.current_case.start_ts = ts_microseconds
+        self.current_case = Report(test_name)
+        self.current_case.start_ts = ts
         self.current_case.src_location = src_location
 
-    def end_case(self, test_name, ts_microseconds):
-        assert self.current_case is not None and self.current_case.name == test_name
-        self.end_current_case(ts_microseconds)
+    def end_case(self, test_name, ts):
+        if self.current_case is None or self.current_case.name != test_name:
+            raise Exception(
+                'cannot close case %s (current: %s)' % (test_name, self.current_case)
+            )
+        self.end_current_case(ts)
         self.current_case = None
 
     def error(self, reason):
@@ -78,37 +184,46 @@ class TestEventReceiver(object):
         return self.cases
 
 
-def tostring(test_results, hostname=gethostname()):
-    def micros_to_s(micros):
-        micros_per_s = 1000000.0
-        return micros / micros_per_s
+def toxml(test_reports, suite_name, hostname=gethostname()):
+    """convert test reports into an xml file"""
 
     output = r'<?xml version="1.0" encoding="UTF-8"?>'
     output += '\n<testsuites>'
 
-    test_count = len(test_results)
+    test_count = len(test_reports)
+    if test_count < 1:
+        raise ValueError('there must be at least one test report')
+
+
     assert test_count > 0, 'expecting at least one test'
 
-    error_count = len([r for r in test_results if r.errors])
-    failure_count = len([r for r in test_results if r.failures])
-    ts_micros = test_results[0].start_ts
-    start_timestamp = datetime.fromtimestamp(
-        micros_to_s(ts_micros)).isoformat()
+    error_count = len([r for r in test_reports if r.errors])
+    failure_count = len([r for r in test_reports if r.failures])
+    ts = test_reports[0].start_ts
+    start_timestamp = datetime.fromtimestamp(ts).isoformat()
 
-    total_duration = micros_to_s(
-        test_results[-1].end_ts - test_results[0].start_ts
+    total_duration = test_reports[-1].end_ts - test_reports[0].start_ts
+
+    output += '<testsuite errors="%(error_count)d" tests="%(test_count)d" failures="%(failure_count)d" name="%(suite_name)s" id="0" package="tests" hostname="%(hostname)s" timestamp="%(start_timestamp)s" time="%(total_duration)f">' % dict(
+        error_count=error_count,
+        failure_count=failure_count,
+        test_count=test_count,
+        hostname=hostname,
+        start_timestamp=start_timestamp,
+        total_duration=total_duration,
+        suite_name=suite_name,
     )
 
-    output += '<testsuite errors="%(error_count)d" tests="%(test_count)d" failures="%(failure_count)d" name="tests" id="0" package="tests" hostname="%(hostname)s" timestamp="%(start_timestamp)s" time="%(total_duration)f">' % locals(
-    )
-
-    for r in test_results:
+    for r in test_reports:
         test_name = r.name
-        test_duration = micros_to_s(r.end_ts - r.start_ts)
+        test_duration = r.end_ts - r.start_ts
         class_name = r.src_location
 
         if r.errors or r.failures:
-            output += '<testcase name="%(test_name)s" classname="%(class_name)s" time="%(test_duration)f">' % locals(
+            output += '<testcase name="%(test_name)s" classname="%(class_name)s" time="%(test_duration)f">' % dict(
+                test_name=test_name,
+                test_duration=test_duration,
+                class_name=class_name,
             )
 
             if r.failures:
@@ -121,7 +236,10 @@ def tostring(test_results, hostname=gethostname()):
 
             output += '</testcase>'
         else:
-            output += '<testcase name="%(test_name)s" classname="%(class_name)s" time="%(test_duration)f"/>' % locals(
+            output += '<testcase name="%(test_name)s" classname="%(class_name)s" time="%(test_duration)f"/>' % dict(
+                test_name=test_name,
+                test_duration=test_duration,
+                class_name=class_name,
             )
 
     output += '</testsuite>'

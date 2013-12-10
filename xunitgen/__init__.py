@@ -1,5 +1,7 @@
 from main import (
-    TestEventReceiver,
-    TestReport,
-    tostring,
+    EventReceiver,
+    Recorder,
+    Report,
+    XunitDestination,
+    toxml,
 )
