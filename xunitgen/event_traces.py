@@ -13,7 +13,7 @@ import re
 
 from socket import gethostname
 
-from xunitgen import TestEventReceiver, tostring
+from xunitgen import EventReceiver, toxml
 
 
 def parse_trace(line):
@@ -59,15 +59,17 @@ def parse_trace(line):
 
 
 def gather_test_results(traces):
-    receiver = TestEventReceiver()
+    MICROS_TO_S = 1000000.0
+    receiver = EventReceiver()
 
     for trace in traces:
+        ts_seconds = trace['ts'] / MICROS_TO_S
         if trace['cat'] == 'test':
             if trace['ph'] == 'E' and receiver.current_case.name == trace['name']:
-                receiver.end_case(trace['name'], trace['ts'])
+                receiver.end_case(trace['name'], ts_seconds)
             elif trace['ph'] == 'B' and receiver.current_case is None:
                 receiver.begin_case(
-                    trace['name'], trace['ts'], os.path.splitext(
+                    trace['name'], ts_seconds, os.path.splitext(
                         trace['args']['filename'])[0].replace(os.sep, '.')
                 )
             elif trace['ph'] == 'I' and trace['name'] == 'failure':

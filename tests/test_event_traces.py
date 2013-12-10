@@ -55,13 +55,13 @@ class TestParser(TestCase):
             dict(ts=0, cat='test', name='a-test', ph='B', args=dict(
                 filename='foo')
             ),
-            dict(ts=3, cat='bleh', name='please-ignore'),
-            dict(ts=6, cat='test', name='another-test', ph='B'),
-            dict(ts=8, cat='test', name='another-test', ph='E'),
-            dict(ts=9, cat='test', name='a-test', ph='E'),
+            dict(ts=3000000, cat='bleh', name='please-ignore'),
+            dict(ts=6000000, cat='test', name='another-test', ph='B'),
+            dict(ts=8000000, cat='test', name='another-test', ph='E'),
+            dict(ts=9000000, cat='test', name='a-test', ph='E'),
         ]
 
         self.assertEquals([
-            xunitgen.TestReport(
-                'a-test', start_ts=0, end_ts=9, src_location='foo'),
+            xunitgen.Report(
+                'a-test', start_ts=0.0, end_ts=9.0, src_location='foo'),
         ], xunitgen.event_traces.gather_test_results(traces))

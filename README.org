@@ -1,3 +1,4 @@
+#+OPTIONS: ^:nil
 * Abstract
 
 =xunitgen= is a python module for the simple production of =xunit= or =junit=
@@ -20,7 +21,21 @@ Simply add the directory surrounding =xunitgen= into your =PYTHONPATH=, then:
 #+begin_src python
 import xunitgen
 
-receiver = xunitgen.TestEventReceiver()
+destination = xunitgen.XunitDestination('.')
+
+with xunitgen.Recorder(destination, 'my-test-suite') as recorder:
+    with recorder.step('a-test'):
+        raise Exception('Foo')
+#+end_src
+
+Which will produce a file named my-test-suite.xml under the current directory
+
+Or, using the lower level API:
+
+#+begin_src python
+import xunitgen
+
+receiver = xunitgen.EventReceiver()
 receiver.begin_case('a-test', 0, 'foo')
 receiver.failure('because', 'ExceptionFoo')
 receiver.end_case('a-test', 9)
@@ -35,7 +50,7 @@ file:xunitgen/event_trace.py
 
 * Contributing
 
-If you want to make code contributions to =xunitgen= here are 
+If you want to make code contributions to =xunitgen= here are
 the steps to follow to get a working development environment:
 
 Create a virtual environment and activate it
