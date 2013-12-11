@@ -9,11 +9,6 @@ them into a report.
 
 It brings / need no dependencies besides an installation of =Python 2=.
 
-Also look at =nose='s xunit (more mature at this time) plugin if you're
-interested in producing such xml files:
-
-  http://nose.readthedocs.org/en/latest/plugins/xunit.html
-
 * Using
 
 Simply add the directory surrounding =xunitgen= into your =PYTHONPATH=, then:
