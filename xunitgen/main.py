@@ -163,7 +163,7 @@ class EventReceiver(object):
     def error(self, reason):
         assert self.current_case is not None
         self.current_case.errors.append(
-            'error %r' % (
+            'error %s' % (
                 reason
             )
         )
@@ -171,7 +171,7 @@ class EventReceiver(object):
     def failure(self, reason, src_location):
         assert self.current_case is not None
         self.current_case.failures.append(
-            'test failure %r at %s' % (
+            'test failure %s at %s' % (
                 reason, src_location,
             )
         )
