@@ -7,7 +7,7 @@ import time
 from datetime import datetime
 from socket import gethostname
 from contextlib import contextmanager
-
+from xml.sax.saxutils import quoteattr
 
 class XunitDestination(object):
     def __init__(self, root_dir):
@@ -204,14 +204,17 @@ def toxml(test_reports, suite_name, hostname=gethostname()):
 
     total_duration = test_reports[-1].end_ts - test_reports[0].start_ts
 
-    output += '<testsuite errors="%(error_count)d" tests="%(test_count)d" failures="%(failure_count)d" name="%(suite_name)s" id="0" package="tests" hostname="%(hostname)s" timestamp="%(start_timestamp)s" time="%(total_duration)f">' % dict(
+    def quote_attribute(value):
+        return quoteattr(value) if value is not None else "(null)"
+
+    output += '<testsuite errors="%(error_count)d" tests="%(test_count)d" failures="%(failure_count)d" name=%(suite_name)s id="0" package="tests" hostname=%(hostname)s timestamp=%(start_timestamp)s time="%(total_duration)f">' % dict(
         error_count=error_count,
         failure_count=failure_count,
         test_count=test_count,
-        hostname=hostname,
-        start_timestamp=start_timestamp,
+        hostname=quote_attribute(hostname),
+        start_timestamp=quote_attribute(start_timestamp),
         total_duration=total_duration,
-        suite_name=suite_name,
+        suite_name=quote_attribute(suite_name),
     )
 
     for r in test_reports:
@@ -220,29 +223,31 @@ def toxml(test_reports, suite_name, hostname=gethostname()):
         class_name = r.src_location
 
         if r.errors or r.failures:
-            output += '<testcase name="%(test_name)s" classname="%(class_name)s" time="%(test_duration)f">' % dict(
-                test_name=test_name,
+            output += '<testcase name=%(test_name)s classname=%(class_name)s time="%(test_duration)f">' % dict(
+                test_name=quote_attribute(test_name),
                 test_duration=test_duration,
-                class_name=class_name,
+                class_name=quote_attribute(class_name),
             )
 
             if r.failures:
-                output += '<failure message="%s" type="exception"/>' % '\n'.join(
-                    ['%s' % e for e in r.failures])
+                output += '<failure message=%s type="exception"/>' % quote_attribute(
+                    '\n'.join(['%s' % e for e in r.failures])
+                )
 
             else:
-                output += '<error message="%s" type="exception"/>' % '\n'.join(
-                    ['%s' % e for e in r.errors])
+                output += '<error message=%s type="exception"/>' % quote_attribute(
+                    '\n'.join(['%s' % e for e in r.errors])
+                )
 
             output += '</testcase>'
         else:
-            output += '<testcase name="%(test_name)s" classname="%(class_name)s" time="%(test_duration)f"/>' % dict(
-                test_name=test_name,
+            output += '<testcase name=%(test_name)s classname=%(class_name)s time="%(test_duration)f"/>' % dict(
+                test_name=quote_attribute(test_name),
                 test_duration=test_duration,
-                class_name=class_name,
+                class_name=quote_attribute(class_name),
             )
 
     output += '</testsuite>'
     output += '</testsuites>'
 
-    return output
+    return output.encode('utf-8')
