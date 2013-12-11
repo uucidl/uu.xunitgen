@@ -14,6 +14,17 @@ from xunitgen import (
 )
 
 
+def validate_schema(xmlstring):
+    xmlschema = None
+    with open(os.path.join(os.path.dirname(__file__), 'data/jenkins-xunit.xsd')) as f:
+        xmlschema_doc = lxml_etree.parse(f)
+        xmlschema = lxml_etree.XMLSchema(xmlschema_doc)
+
+    xmlstream = StringIO(xmlstring)
+    doc = lxml_etree.parse(xmlstream)
+    xmlschema.assertValid(doc)
+
+
 class TestFormat(TestCase):
     def test_trivial(self):
         self.assertEquals([], EventReceiver().results())
@@ -125,6 +136,7 @@ class TestFormat(TestCase):
             src_location=os.path.join(
                 'this', 'is', 'a', 'baz').replace(os.sep, '.')
         )
+
         test_a.errors.append('this is an error')
         test_a.failures.append('this is a failure')
         test_b.errors.append('this is an error 2')
@@ -139,7 +151,7 @@ class TestFormat(TestCase):
             <failure message="this is a failure" type="exception" />
         </testcase>
         <testcase classname="this.is.a.bar" name="b-test" time="2.000000">
-            <error message="this is an error 2\nthis is another error in the same test" type="exception" />
+            <error message="this is an error 2&#10;this is another error in the same test" type="exception" />
         </testcase>
         <testcase classname="this.is.a.baz" name="c-test" time="2.000000"/>
     </testsuite>
@@ -156,15 +168,28 @@ class TestFormat(TestCase):
 
             return ET.tostring(et)
 
-        def validate_schema(xmlstring):
-            xmlschema = None
-            with open(os.path.join(os.path.dirname(__file__), 'data/jenkins-xunit.xsd')) as f:
-                xmlschema_doc = lxml_etree.parse(f)
-                xmlschema = lxml_etree.XMLSchema(xmlschema_doc)
-
-            xmlstream = StringIO(xmlstring)
-            xmlschema.assertValid(lxml_etree.parse(xmlstream))
-
         xunit_result = toxml(test_reports, 'tests', 'test-hostname')
+        print xunit_result
         self.assertEquals(xmlnorm(xunit_reference), xmlnorm(xunit_result))
+        validate_schema(xunit_result)
+
+
+    def test_toxml_must_escape_its_content(self):
+        test_a = Report(
+            '<a-test>', start_ts=0, end_ts=1, src_location='<"world">'
+        )
+        test_a.errors.append('<a solid piece of "content">')
+        test_b = Report(
+            '<b-test>', start_ts=0, end_ts=1, src_location='<"world">'
+        )
+        test_b.errors.append('<a "solid" piece of content>')
+        xunit_result = toxml([test_a, test_b], 'escape-tests', 'test-hostname')
+        validate_schema(xunit_result)
+
+
+    def test_toxml_must_accept_unicode(self):
+        test_a = Report(
+            '<a-test>', start_ts=0, end_ts=1, src_location=u'\u4e16\u754c'
+        )
+        xunit_result = toxml([test_a], 'unicode-tests', 'test-hostname')
         validate_schema(xunit_result)
