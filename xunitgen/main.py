@@ -79,6 +79,9 @@ class Recorder(object):
 
 
     def step(self, step_name):
+        """Start a new step. returns a context manager which allows you to
+        report an error"""
+
         @contextmanager
         def step_context(step_name):
             if self.event_receiver.current_case is not None:
@@ -86,7 +89,7 @@ class Recorder(object):
 
             self.event_receiver.begin_case(step_name, self.now_seconds(), self.name)
             try:
-                yield
+                yield self.event_receiver
             except:
                 etype, evalue, tb = sys.exc_info()
                 self.event_receiver.error('%r' % [etype, evalue, tb])

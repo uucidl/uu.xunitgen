@@ -118,6 +118,29 @@ class TestFormat(TestCase):
         assert not reports[0].failures
 
 
+    def test_recorder_step_let_you_report_errors(self):
+        class MockDestination(object):
+            def __init__(self):
+                self.reports = {}
+
+            def write_reports(self, relative_path, suite_name, reports):
+                self.reports[relative_path] = suite_name, reports
+
+        destination = MockDestination()
+
+        with Recorder(destination, 'fake-name') as rec:
+            with rec.step('failing-step') as step:
+                step.error('my step has failed')
+
+        name, reports = destination.reports['fake-name']
+        self.assertEquals(1, len(reports))
+        self.assertEquals('failing-step', reports[0].name)
+        self.assertEquals(1, len(reports[0].errors))
+        self.assertEquals('error my step has failed', reports[0].errors[0])
+        assert not reports[0].failures
+
+
+
     def test_toxml_without_report (self):
         self.assertRaises(ValueError, toxml, [], None)
 
