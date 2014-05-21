@@ -11,7 +11,8 @@ It brings / need no dependencies besides an installation of =Python 2=.
 
 * Using
 
-Simply add the directory surrounding =xunitgen= into your =PYTHONPATH=, then:
+Once you have added the directory surrounding =xunitgen= into your =PYTHONPATH=,
+you can create simple test steps by using the xunitgen.Recorder:
 
 #+begin_src python
 import xunitgen
@@ -19,13 +20,21 @@ import xunitgen
 destination = xunitgen.XunitDestination('.')
 
 with xunitgen.Recorder(destination, 'my-test-suite') as recorder:
-    with recorder.step('a-test'):
-        raise Exception('Foo')
+    with recorder.step('a-success') as step:
+        pass
+
+    with recorder.step('a-failing-test') as step:
+        step.error('this step has failed')
+        
+    with recorder.step('another-failing-test'):
+        raise Exception('I have failed too!')
 #+end_src
 
 Which will produce a file named my-test-suite.xml under the current directory
 
-Or, using the lower level API:
+** Lower level, event API
+
+You can also use a lower level API (EventReceiver) if you need finer control:
 
 #+begin_src python
 import xunitgen
@@ -38,8 +47,12 @@ receiver.end_case('a-test', 9)
 print xunitgen.tostring(receiver.results())
 #+end_src
 
-See also the source code for the event_trace module, it can serve as
-an example for the API:
+** Example (event_trace module)
+
+The xunitgen.event_trace module shows an example of using the lower
+level API to convert a tracing format to xUnit files. This can be
+used for instance by C programs/tests to produce test traces
+without having to implement the xUnit format.
 
 file:xunitgen/event_trace.py
 
