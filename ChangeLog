@@ -1,3 +1,9 @@
+2014-05-21  Nicolas Léveillé  <nicolas@uucidl.com>
+
+	* release: 0.1.4
+	* integrates Travis-CI for continuous testing
+	* updated tests and README.org
+
 2014-05-20    <nicolas@uucidl.com>
 
 	* release: 0.1.3
@@ -18,4 +24,3 @@
 	- all internal timestamps in seconds
 	- XunitDestination, a class marshalling the creation of xunit xml
 	filenames under a root
-

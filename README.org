@@ -1,6 +1,6 @@
 #+OPTIONS: ^:nil
 
-[[https://travis-ci.org/uucidl/uu.xunitgen.svg?branch=master]]
+Travis-CI: [[https://travis-ci.org/uucidl/uu.xunitgen.svg?branch=master]]
 
 * Abstract
 
@@ -28,7 +28,7 @@ with xunitgen.Recorder(destination, 'my-test-suite') as recorder:
 
     with recorder.step('a-failing-test') as step:
         step.error('this step has failed')
-        
+
     with recorder.step('another-failing-test'):
         raise Exception('I have failed too!')
 #+end_src
