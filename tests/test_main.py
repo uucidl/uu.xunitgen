@@ -1,6 +1,7 @@
 import os
 import xml.etree.ElementTree as ET
 
+from datetime import datetime
 from unittest import TestCase
 from StringIO import StringIO
 
@@ -169,7 +170,7 @@ class TestFormat(TestCase):
 
         xunit_reference = """<?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
-    <testsuite errors="2" failures="1" hostname="test-hostname" id="0" name="tests" package="tests" tests="3" time="5.000000" timestamp="1970-01-01T01:00:00">
+    <testsuite errors="2" failures="1" hostname="test-hostname" id="0" name="tests" package="tests" tests="3" time="5.000000" timestamp="%s">
         <testcase classname="foo" name="a-test" time="1.000000">
             <failure message="this is a failure" type="exception" />
         </testcase>
@@ -179,7 +180,7 @@ class TestFormat(TestCase):
         <testcase classname="this.is.a.baz" name="c-test" time="2.000000"/>
     </testsuite>
 </testsuites>
-"""
+""" % datetime.fromtimestamp(0).isoformat()
 
         def xmlnorm(xmlstring):
             et = ET.fromstring(xmlstring)
@@ -191,8 +192,10 @@ class TestFormat(TestCase):
 
             return ET.tostring(et)
 
-        xunit_result = toxml(test_reports, 'tests', 'test-hostname')
-        print xunit_result
+        xunit_result = toxml(
+            test_reports, 'tests', hostname='test-hostname',
+        )
+        print(xunit_result)
         self.assertEquals(xmlnorm(xunit_reference), xmlnorm(xunit_result))
         validate_schema(xunit_result)
 
