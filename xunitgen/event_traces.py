@@ -13,7 +13,7 @@ import re
 
 from socket import gethostname
 
-from xunitgen import EventReceiver, toxml
+from xunitgen import XunitDestination, EventReceiver, toxml
 
 
 def parse_trace(line):
@@ -86,6 +86,8 @@ def main():
 
     args = parser.parse_args()
 
+    destination = XunitDestination(os.path.dirname(os.path.abspath(args.dst_xunit_file)))
+    xml_filepath = os.path.splitext(os.path.basename(args.dst_xunit_file))[0]
     with open(args.src_trace_log) as file:
         def parse_line(line_i, line):
             try:
@@ -98,8 +100,8 @@ def main():
             [parse_line(i, line) for i, line in enumerate(file.readlines())]
         )
 
-    with open(args.dst_xunit_file, 'w') as file:
-        file.write(tostring(test_results, gethostname()))
+    destination.write_reports(xml_filepath, 'testsuite', test_results)
+
 
 if __name__ == "__main__":
     main()
