@@ -1,4 +1,7 @@
 #+OPTIONS: ^:nil
+
+[[https://travis-ci.org/uucidl/uu.xunitgen.svg?branch=master]]
+
 * Abstract
 
 =xunitgen= is a python module for the simple production of =xunit= or =junit=
@@ -54,7 +57,7 @@ level API to convert a tracing format to xUnit files. This can be
 used for instance by C programs/tests to produce test traces
 without having to implement the xUnit format.
 
-file:xunitgen/event_trace.py
+[[xunitgen/event_trace.py]]
 
 * Contributing
 
