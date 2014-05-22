@@ -26,6 +26,16 @@ def validate_schema(xmlstring):
     xmlschema.assertValid(doc)
 
 
+class FakeDestination(object):
+    """to assist tests against the reports"""
+    def __init__(self):
+        self.reports = {}
+
+    def write_reports(self, relative_path, suite_name, test_reports,
+                      package_name=None):
+        self.reports[relative_path] = suite_name, test_reports, package_name
+
+
 class TestFormat(TestCase):
     def test_trivial(self):
         self.assertEquals([], EventReceiver().results())
@@ -50,42 +60,37 @@ class TestFormat(TestCase):
 
 
     def test_recorder_no_two_step_at_a_time(self):
-        class MockDestination(object):
-            def __init__(self):
-                self.reports = {}
-
-            def write_reports(self, relative_path, suite_name, test_reports):
-                self.reports[relative_path] = suite_name, test_reports
-
         def inner_step(rec):
             with rec.step('forbidden-inner-step'):
                 pass
 
-        destination = MockDestination()
+        destination = FakeDestination()
         with Recorder(destination, 'fake-name') as rec:
             with rec.step('normal-step'):
                 self.assertRaises(Exception, inner_step, rec)
 
-        name, reports = destination.reports['fake-name']
+        name, reports, _ = destination.reports['fake-name']
         self.assertEquals('fake-name', name)
         self.assertEquals(1, len(reports))
 
+    def test_that_recorder_knows_package_names(self):
+        destination = FakeDestination()
+        with Recorder(destination, 'fake-name',
+                      package_name='fake-package') as rec:
+            with rec.step('a-step'):
+                pass
+
+        _, _, package_name = destination.reports['fake-name']
+        self.assertEquals('fake-package', package_name)
 
     def test_recorder_step(self):
-        class MockDestination(object):
-            def __init__(self):
-                self.reports = {}
-
-            def write_reports(self, relative_path, suite_name, test_reports):
-                self.reports[relative_path] = suite_name, test_reports
-
-        destination = MockDestination()
+        destination = FakeDestination()
 
         with Recorder(destination, 'fake-name') as recorder:
             with recorder.step('successful-step'):
                 pass
 
-        name, reports = destination.reports['fake-name']
+        name, reports, _ = destination.reports['fake-name']
         self.assertEquals('fake-name', name)
         self.assertEquals(1, len(reports))
         self.assertEquals('successful-step', reports[0].name)
@@ -94,14 +99,7 @@ class TestFormat(TestCase):
 
 
     def test_recorder_step_with_error(self):
-        class MockDestination(object):
-            def __init__(self):
-                self.reports = {}
-
-            def write_reports(self, relative_path, suite_name, reports):
-                self.reports[relative_path] = suite_name, reports
-
-        destination = MockDestination()
+        destination = FakeDestination()
 
         try:
             with Recorder(destination, 'fake-name') as rec:
@@ -111,7 +109,7 @@ class TestFormat(TestCase):
         except Exception:
             pass
 
-        name, reports = destination.reports['fake-name']
+        name, reports, _ = destination.reports['fake-name']
         self.assertEquals('fake-name', name)
         self.assertEquals(1, len(reports))
         self.assertEquals('failing-step', reports[0].name)
@@ -120,20 +118,13 @@ class TestFormat(TestCase):
 
 
     def test_recorder_step_let_you_report_errors(self):
-        class MockDestination(object):
-            def __init__(self):
-                self.reports = {}
-
-            def write_reports(self, relative_path, suite_name, reports):
-                self.reports[relative_path] = suite_name, reports
-
-        destination = MockDestination()
+        destination = FakeDestination()
 
         with Recorder(destination, 'fake-name') as rec:
             with rec.step('failing-step') as step:
                 step.error('my step has failed')
 
-        name, reports = destination.reports['fake-name']
+        name, reports, _ = destination.reports['fake-name']
         self.assertEquals(1, len(reports))
         self.assertEquals('failing-step', reports[0].name)
         self.assertEquals(1, len(reports[0].errors))
@@ -170,7 +161,7 @@ class TestFormat(TestCase):
 
         xunit_reference = """<?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
-    <testsuite errors="2" failures="1" hostname="test-hostname" id="0" name="tests" package="tests" tests="3" time="5.000000" timestamp="%s">
+    <testsuite errors="2" failures="1" hostname="test-hostname" id="0" name="tests" package="pkg" tests="3" time="5.000000" timestamp="%s">
         <testcase classname="foo" name="a-test" time="1.000000">
             <failure message="this is a failure" type="exception" />
         </testcase>
@@ -193,11 +184,24 @@ class TestFormat(TestCase):
             return ET.tostring(et)
 
         xunit_result = toxml(
-            test_reports, 'tests', hostname='test-hostname',
+            test_reports, 'tests', hostname='test-hostname', package_name='pkg',
         )
         print(xunit_result)
         self.assertEquals(xmlnorm(xunit_reference), xmlnorm(xunit_result))
         validate_schema(xunit_result)
+
+    def test_toxml_has_optional_parameters(self):
+        reports = [
+            Report(
+                'a-test', start_ts=0, end_ts=1, src_location='foo'
+            )
+        ]
+
+        xunit_result = toxml(
+            reports, 'suite-name',
+        )
+        validate_schema(xunit_result)
+
 
 
     def test_toxml_must_escape_its_content(self):

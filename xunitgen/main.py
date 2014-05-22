@@ -17,12 +17,13 @@ class XunitDestination(object):
         self.expected_xunit_files = []
 
 
-    def write_reports(self, relative_path, suite_name, reports):
+    def write_reports(self, relative_path, suite_name, reports,
+                      package_name=None):
         """write the collection of reports to the given path"""
         
         dest_path = self.reserve_file(relative_path)
         with open(dest_path, 'w') as outf:
-            outf.write(toxml(reports, suite_name))
+            outf.write(toxml(reports, suite_name, package_name=package_name))
         return dest_path
 
 
@@ -67,8 +68,9 @@ class Recorder(object):
     It allows you to record a series of steps into a single xunit.xml file.
     """
 
-    def __init__(self, destination, name):
+    def __init__(self, destination, name, package_name=None):
         self.name = name
+        self.package_name = package_name
         self.destination = destination
         self.event_receiver = None
 
@@ -109,7 +111,9 @@ class Recorder(object):
         if not results:
             raise ValueError('your hook must at least perform one step!')
 
-        self.destination.write_reports(self.name, self.name, results)
+        self.destination.write_reports(
+            self.name, self.name, results, package_name=self.package_name,
+        )
 
 
 
@@ -192,7 +196,8 @@ class EventReceiver(object):
         return self.cases
 
 
-def toxml(test_reports, suite_name, hostname=gethostname()):
+def toxml(test_reports, suite_name,
+          hostname=gethostname(), package_name="tests"):
     """convert test reports into an xml file"""
 
     output = r'<?xml version="1.0" encoding="UTF-8"?>'
@@ -215,7 +220,7 @@ def toxml(test_reports, suite_name, hostname=gethostname()):
     def quote_attribute(value):
         return quoteattr(value) if value is not None else "(null)"
 
-    output += '<testsuite errors="%(error_count)d" tests="%(test_count)d" failures="%(failure_count)d" name=%(suite_name)s id="0" package="tests" hostname=%(hostname)s timestamp=%(start_timestamp)s time="%(total_duration)f">' % dict(
+    output += '<testsuite errors="%(error_count)d" tests="%(test_count)d" failures="%(failure_count)d" name=%(suite_name)s id="0" package=%(package_name)s hostname=%(hostname)s timestamp=%(start_timestamp)s time="%(total_duration)f">' % dict(
         error_count=error_count,
         failure_count=failure_count,
         test_count=test_count,
@@ -223,6 +228,7 @@ def toxml(test_reports, suite_name, hostname=gethostname()):
         start_timestamp=quote_attribute(start_timestamp),
         total_duration=total_duration,
         suite_name=quote_attribute(suite_name),
+        package_name=quote_attribute(package_name),
     )
 
     for r in test_reports:
