@@ -1,3 +1,8 @@
+2014-05-22  Nicolas Léveillé  <nicolas@uucidl.com>
+
+	* release: 0.1.5
+	* don't hide exceptions happening inside a Recorder
+
 2014-05-21  Nicolas Léveillé  <nicolas@uucidl.com>
 
 	* release: 0.1.4
