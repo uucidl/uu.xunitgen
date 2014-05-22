@@ -11,7 +11,7 @@ from xml.sax.saxutils import quoteattr
 
 class XunitDestination(object):
     """Manages a repository of xunit files, for writing"""
-    
+
     def __init__(self, root_dir):
         self.root_dir = root_dir
         self.expected_xunit_files = []
@@ -20,7 +20,7 @@ class XunitDestination(object):
     def write_reports(self, relative_path, suite_name, reports,
                       package_name=None):
         """write the collection of reports to the given path"""
-        
+
         dest_path = self.reserve_file(relative_path)
         with open(dest_path, 'w') as outf:
             outf.write(toxml(reports, suite_name, package_name=package_name))
@@ -109,7 +109,9 @@ class Recorder(object):
     def __exit__(self, *exc_info):
         results = self.event_receiver.results()
         if not results:
-            raise ValueError('your hook must at least perform one step!')
+            already_throwing = exc_info and exc_info[0] is not None
+            if not already_throwing:
+                raise ValueError('your hook must at least perform one step!')
 
         self.destination.write_reports(
             self.name, self.name, results, package_name=self.package_name,
@@ -119,7 +121,7 @@ class Recorder(object):
 
 class Report(object):
     """represents a test case report"""
-    
+
     def __init__(self, name, start_ts=None, end_ts=None, src_location=None):
         self.name = name
         self.start_ts = start_ts

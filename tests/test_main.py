@@ -59,6 +59,17 @@ class TestFormat(TestCase):
         self.assertRaises(Exception, Recorder(None, 'fake-name').step('step without recorder context'))
 
 
+    def test_recorder_does_not_hide_an_exception(self):
+        class SentinelException(Exception):
+            pass
+
+        def raising_fn():
+            with Recorder(FakeDestination(), 'fake-name') as rec:
+                raise SentinelException()
+
+        self.assertRaises(SentinelException, raising_fn)
+
+
     def test_recorder_no_two_step_at_a_time(self):
         def inner_step(rec):
             with rec.step('forbidden-inner-step'):
