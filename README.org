@@ -10,7 +10,8 @@ XML files for use in continuous integration. Such as with =Jenkins=.
 It converts a stream of timed (start/finish/error) events and convert
 them into a report.
 
-It brings / need no dependencies besides an installation of =Python 2=.
+It brings / need no dependencies besides an installation of =Python 2=
+or =Python 3=.
 
 * Using
 
