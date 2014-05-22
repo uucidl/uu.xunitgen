@@ -10,12 +10,16 @@ from contextlib import contextmanager
 from xml.sax.saxutils import quoteattr
 
 class XunitDestination(object):
+    """Manages a repository of xunit files, for writing"""
+    
     def __init__(self, root_dir):
         self.root_dir = root_dir
         self.expected_xunit_files = []
 
 
     def write_reports(self, relative_path, suite_name, reports):
+        """write the collection of reports to the given path"""
+        
         dest_path = self.reserve_file(relative_path)
         with open(dest_path, 'w') as outf:
             outf.write(toxml(reports, suite_name))
@@ -111,6 +115,7 @@ class Recorder(object):
 
 class Report(object):
     """represents a test case report"""
+    
     def __init__(self, name, start_ts=None, end_ts=None, src_location=None):
         self.name = name
         self.start_ts = start_ts
