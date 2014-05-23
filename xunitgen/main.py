@@ -22,7 +22,7 @@ class XunitDestination(object):
         """write the collection of reports to the given path"""
 
         dest_path = self.reserve_file(relative_path)
-        with open(dest_path, 'w') as outf:
+        with open(dest_path, 'wb') as outf:
             outf.write(toxml(reports, suite_name, package_name=package_name))
         return dest_path
 
@@ -202,8 +202,8 @@ def toxml(test_reports, suite_name,
           hostname=gethostname(), package_name="tests"):
     """convert test reports into an xml file"""
 
-    output = r'<?xml version="1.0" encoding="UTF-8"?>'
-    output += '\n<testsuites>'
+    output = u'<?xml version="1.0" encoding="UTF-8"?>'
+    output += u'\n<testsuites>'
 
     test_count = len(test_reports)
     if test_count < 1:
@@ -222,7 +222,7 @@ def toxml(test_reports, suite_name,
     def quote_attribute(value):
         return quoteattr(value) if value is not None else "(null)"
 
-    output += '<testsuite errors="%(error_count)d" tests="%(test_count)d" failures="%(failure_count)d" name=%(suite_name)s id="0" package=%(package_name)s hostname=%(hostname)s timestamp=%(start_timestamp)s time="%(total_duration)f">' % dict(
+    output += u'<testsuite errors="%(error_count)d" tests="%(test_count)d" failures="%(failure_count)d" name=%(suite_name)s id="0" package=%(package_name)s hostname=%(hostname)s timestamp=%(start_timestamp)s time="%(total_duration)f">' % dict(
         error_count=error_count,
         failure_count=failure_count,
         test_count=test_count,
@@ -239,31 +239,31 @@ def toxml(test_reports, suite_name,
         class_name = r.src_location
 
         if r.errors or r.failures:
-            output += '<testcase name=%(test_name)s classname=%(class_name)s time="%(test_duration)f">' % dict(
+            output += u'<testcase name=%(test_name)s classname=%(class_name)s time="%(test_duration)f">' % dict(
                 test_name=quote_attribute(test_name),
                 test_duration=test_duration,
                 class_name=quote_attribute(class_name),
             )
 
             if r.failures:
-                output += '<failure message=%s type="exception"/>' % quote_attribute(
+                output += u'<failure message=%s type="exception"/>' % quote_attribute(
                     '\n'.join(['%s' % e for e in r.failures])
                 )
 
             else:
-                output += '<error message=%s type="exception"/>' % quote_attribute(
+                output += u'<error message=%s type="exception"/>' % quote_attribute(
                     '\n'.join(['%s' % e for e in r.errors])
                 )
 
-            output += '</testcase>'
+            output += u'</testcase>'
         else:
-            output += '<testcase name=%(test_name)s classname=%(class_name)s time="%(test_duration)f"/>' % dict(
+            output += u'<testcase name=%(test_name)s classname=%(class_name)s time="%(test_duration)f"/>' % dict(
                 test_name=quote_attribute(test_name),
                 test_duration=test_duration,
                 class_name=quote_attribute(class_name),
             )
 
-    output += '</testsuite>'
-    output += '</testsuites>'
+    output += u'</testsuite>'
+    output += u'</testsuites>'
 
     return output.encode('utf-8')

@@ -2,8 +2,8 @@ import os
 import xml.etree.ElementTree as ET
 
 from datetime import datetime
+from io import BytesIO
 from unittest import TestCase
-from StringIO import StringIO
 
 from lxml import etree as lxml_etree
 
@@ -21,7 +21,7 @@ def validate_schema(xmlstring):
         xmlschema_doc = lxml_etree.parse(f)
         xmlschema = lxml_etree.XMLSchema(xmlschema_doc)
 
-    xmlstream = StringIO(xmlstring)
+    xmlstream = BytesIO(xmlstring)
     doc = lxml_etree.parse(xmlstream)
     xmlschema.assertValid(doc)
 
