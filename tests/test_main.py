@@ -112,20 +112,23 @@ class TestFormat(TestCase):
     def test_recorder_step_with_error(self):
         destination = FakeDestination()
 
+        class SentinelException(Exception):
+            pass
+
         try:
             with Recorder(destination, 'fake-name') as rec:
                 with rec.step('failing-step'):
-                    raise Exception
+                    raise SentinelException()
             assert False
-        except Exception:
+        except SentinelException:
             pass
 
         name, reports, _ = destination.reports['fake-name']
         self.assertEquals('fake-name', name)
         self.assertEquals(1, len(reports))
         self.assertEquals('failing-step', reports[0].name)
-        self.assertEquals(1, len(reports[0].errors))
         assert not reports[0].failures
+        self.assertEquals(1, len(reports[0].errors), reports)
 
 
     def test_recorder_step_let_you_report_errors(self):
