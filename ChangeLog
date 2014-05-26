@@ -1,3 +1,10 @@
+2014-05-26  Nicolas Léveillé  <nicolas@uucidl.com>
+
+	* release: 0.1.6
+	* clearer module organization
+	* support python 3
+	* adds setup.py
+
 2014-05-22  Nicolas Léveillé  <nicolas@uucidl.com>
 
 	* release: 0.1.5
