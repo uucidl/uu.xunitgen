@@ -83,3 +83,5 @@ With the virtual environment active, test your changes before submitting:
 #+begin_example
 $ nosetests -s tests
 #+end_example
+* Additional Contributors
+- Diez Roggisch <dir@ableton.com>
