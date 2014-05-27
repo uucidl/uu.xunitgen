@@ -1,8 +1,10 @@
 """convert test events to a xunit XML file"""
 
+from xml.etree import ElementTree as et
+
 from datetime import datetime
 from socket import gethostname
-from xml.sax.saxutils import quoteattr
+
 
 class Report(object):
     """represents a test case report"""
@@ -87,8 +89,8 @@ def toxml(test_reports, suite_name,
           hostname=gethostname(), package_name="tests"):
     """convert test reports into an xml file"""
 
-    output = u'<?xml version="1.0" encoding="UTF-8"?>'
-    output += u'\n<testsuites>'
+    testsuites = et.Element("testsuites")
+    testsuite = et.SubElement(testsuites, "testsuite")
 
     test_count = len(test_reports)
     if test_count < 1:
@@ -105,17 +107,19 @@ def toxml(test_reports, suite_name,
     total_duration = test_reports[-1].end_ts - test_reports[0].start_ts
 
     def quote_attribute(value):
-        return quoteattr(value) if value is not None else "(null)"
+        return value if value is not None else "(null)"
 
-    output += u'<testsuite errors="%(error_count)d" tests="%(test_count)d" failures="%(failure_count)d" name=%(suite_name)s id="0" package=%(package_name)s hostname=%(hostname)s timestamp=%(start_timestamp)s time="%(total_duration)f">' % dict(
-        error_count=error_count,
-        failure_count=failure_count,
-        test_count=test_count,
+
+    testsuite.attrib = dict(
+        id="0",
+        errors=str(error_count),
+        failures=str(failure_count),
+        tests=str(test_count),
         hostname=quote_attribute(hostname),
-        start_timestamp=quote_attribute(start_timestamp),
-        total_duration=total_duration,
-        suite_name=quote_attribute(suite_name),
-        package_name=quote_attribute(package_name),
+        timestamp=quote_attribute(start_timestamp),
+        time="%f" % total_duration,
+        name=quote_attribute(suite_name),
+        package=quote_attribute(package_name),
     )
 
     for r in test_reports:
@@ -123,32 +127,24 @@ def toxml(test_reports, suite_name,
         test_duration = r.end_ts - r.start_ts
         class_name = r.src_location
 
+        testcase = et.SubElement(testsuite, "testcase")
+        testcase.attrib = dict(
+            name=test_name,
+            classname=quote_attribute(class_name),
+            time="%f" % test_duration,
+            )
         if r.errors or r.failures:
-            output += u'<testcase name=%(test_name)s classname=%(class_name)s time="%(test_duration)f">' % dict(
-                test_name=quote_attribute(test_name),
-                test_duration=test_duration,
-                class_name=quote_attribute(class_name),
-            )
-
             if r.failures:
-                output += u'<failure message=%s type="exception"/>' % quote_attribute(
-                    '\n'.join(['%s' % e for e in r.failures])
+                failure = et.SubElement(testcase, "failure")
+                failure.attrib = dict(
+                    type="exception",
+                    message=quote_attribute('\n'.join(['%s' % e for e in r.failures])),
                 )
-
             else:
-                output += u'<error message=%s type="exception"/>' % quote_attribute(
-                    '\n'.join(['%s' % e for e in r.errors])
+                error = et.SubElement(testcase, "error")
+                error.attrib = dict(
+                    type="exception",
+                    message=quote_attribute('\n'.join(['%s' % e for e in r.errors])),
                 )
 
-            output += u'</testcase>'
-        else:
-            output += u'<testcase name=%(test_name)s classname=%(class_name)s time="%(test_duration)f"/>' % dict(
-                test_name=quote_attribute(test_name),
-                test_duration=test_duration,
-                class_name=quote_attribute(class_name),
-            )
-
-    output += u'</testsuite>'
-    output += u'</testsuites>'
-
-    return output.encode('utf-8')
+    return et.tostring(testsuites)
