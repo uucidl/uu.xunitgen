@@ -147,4 +147,4 @@ def toxml(test_reports, suite_name,
                     message=quote_attribute('\n'.join(['%s' % e for e in r.errors])),
                 )
 
-    return et.tostring(testsuites)
+    return et.tostring(testsuites, encoding="utf-8")
