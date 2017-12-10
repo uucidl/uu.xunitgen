@@ -241,3 +241,11 @@ class TestFormat(TestCase):
         )
         xunit_result = toxml([test_a], 'unicode-tests', 'test-hostname')
         validate_schema(xunit_result)
+
+    def test_toxml_can_accept_absent_package_name(self):
+        ts_origin = 1401278400
+        test_a = Report(
+            '<a-test>', start_ts=ts_origin+0, end_ts=ts_origin+1, src_location=''
+        )
+        xunit_result = toxml([test_a], 'unicode-tests', 'test-hostname', package_name=None)
+        validate_schema(xunit_result)
