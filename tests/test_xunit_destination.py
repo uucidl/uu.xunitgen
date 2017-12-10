@@ -61,7 +61,8 @@ class TestXunitDestination(TestCase):
 
 
     def test_write_reports(self):
-        path = self.destination.write_reports('hello', 'a-suite', [Report('a-case', start_ts=0, end_ts=0)])
+        ts_origin = 1401278400
+        path = self.destination.write_reports('hello', 'a-suite', [Report('a-case', start_ts=ts_origin+0, end_ts=ts_origin+0)])
         assert os.path.isfile(path)
         self.destination.check()
         self.assertRaises(ValueError, self.destination.reserve_file, 'hello')

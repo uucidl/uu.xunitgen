@@ -152,16 +152,17 @@ class TestFormat(TestCase):
 
 
     def test_toxml(self):
+        ts_origin = 1401278400
         test_a = Report(
-            'a-test', start_ts=0, end_ts=1, src_location='foo'
+            'a-test', start_ts=ts_origin+0, end_ts=ts_origin+1, src_location='foo'
         )
         test_b = Report(
-            'b-test', start_ts=3, end_ts=5,
+            'b-test', start_ts=ts_origin+3, end_ts=ts_origin+5,
             src_location=os.path.join(
                 'this', 'is', 'a', 'bar').replace(os.sep, '.')
         )
         test_c = Report(
-            'c-test', start_ts=3, end_ts=5,
+            'c-test', start_ts=ts_origin+3, end_ts=ts_origin+5,
             src_location=os.path.join(
                 'this', 'is', 'a', 'baz').replace(os.sep, '.')
         )
@@ -185,7 +186,7 @@ class TestFormat(TestCase):
         <testcase classname="this.is.a.baz" name="c-test" time="2.000000"/>
     </testsuite>
 </testsuites>
-""" % datetime.fromtimestamp(0).isoformat()
+""" % datetime.fromtimestamp(ts_origin+0).isoformat()
 
         def xmlnorm(xmlstring):
             et = ET.fromstring(xmlstring)
@@ -205,9 +206,10 @@ class TestFormat(TestCase):
         validate_schema(xunit_result)
 
     def test_toxml_has_optional_parameters(self):
+        ts_origin = 1401278400
         reports = [
             Report(
-                'a-test', start_ts=0, end_ts=1, src_location='foo'
+                'a-test', start_ts=ts_origin, end_ts=ts_origin+1, src_location='foo'
             )
         ]
 
@@ -219,12 +221,13 @@ class TestFormat(TestCase):
 
 
     def test_toxml_must_escape_its_content(self):
+        ts_origin = 1401278400
         test_a = Report(
-            '<a-test>', start_ts=0, end_ts=1, src_location='<"world">'
+            '<a-test>', start_ts=ts_origin+0, end_ts=ts_origin+1, src_location='<"world">'
         )
         test_a.errors.append('<a solid piece of "content">')
         test_b = Report(
-            '<b-test>', start_ts=0, end_ts=1, src_location='<"world">'
+            '<b-test>', start_ts=ts_origin+0, end_ts=ts_origin+1, src_location='<"world">'
         )
         test_b.errors.append('<a "solid" piece of content>')
         xunit_result = toxml([test_a, test_b], 'escape-tests', 'test-hostname')
@@ -232,8 +235,9 @@ class TestFormat(TestCase):
 
 
     def test_toxml_must_accept_unicode(self):
+        ts_origin = 1401278400
         test_a = Report(
-            '<a-test>', start_ts=0, end_ts=1, src_location=u'\u4e16\u754c'
+            '<a-test>', start_ts=ts_origin+0, end_ts=ts_origin+1, src_location=u'\u4e16\u754c'
         )
         xunit_result = toxml([test_a], 'unicode-tests', 'test-hostname')
         validate_schema(xunit_result)
