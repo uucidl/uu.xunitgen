@@ -3,7 +3,7 @@ from distutils.core import setup
 
 setup(
     name="xunitgen",
-    version="0.1.6",
+    version="1.0.0",
     description="Generate xUnit.xml files",
     author="Nicolas Léveillé",
     author_email="nicolas@uucidl.com",
