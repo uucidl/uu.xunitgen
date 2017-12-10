@@ -1,5 +1,5 @@
 2017-12-10  Nicolas Léveillé  <nicolas@uucidl.com>
-    * release: 1.0.0
+    * release: 1.0.1, 1.0.0
     * passing None to package_name still results
       in valid xml (using Use xml.etree.ElementTree, thanks to
       Diez Roggish <dir@ableton.com>)
