@@ -9,4 +9,6 @@ setup(
     author_email="nicolas@uucidl.com",
     url="https://github.com/uucidl/uu.xunitgen",
     packages=["xunitgen"],
+    license='MIT',
+    long_description=open('README').read(),
 )
